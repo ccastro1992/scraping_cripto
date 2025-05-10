@@ -16,12 +16,6 @@ URL = "https://es.investing.com/crypto/currencies"
 
 # Función para obtener datos de criptomonedas
 def fetch_crypto_data():
-    cache_key = "crypto_data"
-    cached_data = cache.get(cache_key)
-    if cached_data:
-        logging.debug("Datos obtenidos desde caché")
-        return cached_data
-
     try:
         # Intentar con requests y BeautifulSoup primero
         headers = {
@@ -62,7 +56,6 @@ def fetch_crypto_data():
         if not crypto_data:
             logging.warning("No se obtuvieron datos con requests")
 
-        cache[cache_key] = crypto_data
         logging.debug("Datos scrapeados: %s", crypto_data)
         return crypto_data
     except requests.RequestException as e:
