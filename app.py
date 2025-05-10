@@ -18,15 +18,11 @@ URL = "https://es.investing.com/crypto/currencies"
 def fetch_crypto_data():
     try:
         # Intentar con requests y BeautifulSoup primero
-        proxies = {
-            'http': 'http://proxy.server:3128',  # Proxy de PythonAnywhere
-            'https': 'http://proxy.server:3128',
-        }
-
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get('https://es.investing.com/crypto/currencies', proxies=proxies, headers=headers)
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(URL)
 
         # response = requests.get(URL, headers=headers, timeout=5)
         response.raise_for_status()
