@@ -1,20 +1,14 @@
 from flask import Flask, jsonify
-from flask_cors import CORS
 import requests
 from bs4 import BeautifulSoup
 import time
 import logging
-from cachetools import TTLCache
 import cloudscraper
 
 app = Flask(__name__)
-CORS(app)  # Permitir solicitudes CORS
 
 # Configurar logging
 logging.basicConfig(level=logging.DEBUG)
-
-# Cache para almacenar datos por 1 segundo
-cache = TTLCache(maxsize=1, ttl=1)
 
 # URL de la página de criptomonedas de Investing.com
 URL = "https://es.investing.com/crypto/currencies"
