@@ -21,14 +21,9 @@ def fetch_crypto_data():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        scraper = cloudscraper.create_scraper(
-            browser={
-                'browser': 'chrome',
-                'platform': 'windows',
-                'mobile': False
-            }
-        )
-        response = scraper.get(URL)
+        url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd"
+        response = requests.get(url)
+        return response.json()
 
         # response = requests.get(URL, headers=headers, timeout=5)
         response.raise_for_status()
