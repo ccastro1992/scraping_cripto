@@ -71,10 +71,8 @@ def extract_crypto_data():
         return crypto_data
     except requests.RequestException as e:
         logging.error("Error en la solicitud HTTP: %s", e)
-        return crypto_data
     except Exception as e:
         logging.error("Error general en el scraping: %s", e)
-        return crypto_data
 
 if __name__ == '__main__':
     data = extract_crypto_data()
