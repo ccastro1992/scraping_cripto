@@ -1,7 +1,4 @@
 from flask import Flask, render_template, jsonify
-import schedule
-import time
-import threading
 from extractor import extract_crypto_data
 from database import init_db, insert_crypto_data, get_all_crypto_data, insert_historical_price, get_historical_prices
 from transformer import transform_data
@@ -17,10 +14,10 @@ def fetch_and_store_data():
     for data in transformed_data:
         insert_historical_price(data['name'], data['actual_price'], data['timestamp'])
 
-def run_scheduler():
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+#def run_scheduler():
+#    while True:
+#        schedule.run_pending()
+#        time.sleep(1)
 
 @app.route('/api/crypto', methods=['GET'])
 def get_crypto_data():
@@ -52,4 +49,4 @@ if __name__ == '__main__':
     #scheduler_thread.daemon = True
     #scheduler_thread.start()
 
-    app.run(debug=True)
+    app.run()
