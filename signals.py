@@ -26,6 +26,6 @@ def calculate_metrics(historical_prices):
 
     highest_1h = max(prices_last_hour)
     lower_1h = min(prices_last_hour)
-    avg_price = sum(prices_last_hour) / len(prices_last_hour) if prices_last_hour else None
+    avg_price = round(sum(prices_last_hour) / len(prices_last_hour), 4) if prices_last_hour else None
 
     return {'highest_1h': highest_1h, 'lower_1h': lower_1h, 'avg_price': avg_price}

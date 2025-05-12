@@ -15,6 +15,9 @@ def transform_price(price_str):
 
 def transform_data(extract_data):
     transform_data = []
+    if extract_data is None:
+        return
+
     for data in extract_data:
         transform_data.append({
             'name': data[2],

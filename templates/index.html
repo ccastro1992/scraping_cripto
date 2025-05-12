@@ -3,85 +3,141 @@
 <head>
     <title>Señales de Trading</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: #444;
+            margin: 20px 0;
+        }
+
         table {
             width: 80%;
             border-collapse: collapse;
-            margin: 20px auto;
+            margin: 30px auto;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
         }
+
         th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
         }
+
         th {
+            background-color: #007bff;
+            color: white;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        td {
+            font-size: 14px;
+            color: #555;
+        }
+
+        tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+
+        tr:hover {
+            background-color: #f1f9ff;
+        }
+
         .buy {
-            color: green;
+            color: #28a745;
             font-weight: bold;
         }
+
         .sell {
-            color: red;
+            color: #dc3545;
             font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>Señales de Trading de Criptomonedas</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Crypto</th>
-                <th>Actual Pric.</th>
-                <th>Highest 1H</th>
-                <th>Lower 1H</th>
-                <th>AVG Price</th>
-                <th>Signal(B|S)</th>
-            </tr>
-        </thead>
-        <tbody>
-            
-        </tbody>
-    </table>
-    <script>
-        // Ejemplo de actualización dinámica con JavaScript (opcional)
-        function actualizarPrecios() {
-            fetch('/api/crypto')
-                .then(response => response.json())
-                .then(signals => {
-                    // Actualizar el contenido de la página con los nuevos datos
-                    let body = document.querySelector('tbody');
-                    body.innerHTML = ''; // Limpiar body
-                    signals.forEach(signal => {
-                        let row = document.createElement('tr');
-                        
-                        let nameCell = document.createElement('td');
-                        let priceCell = document.createElement('td');
-                        let highestCell = document.createElement('td');
-                        let lowerCell = document.createElement('td');
-                        let avgCell = document.createElement('td');
-                        let signalCell = document.createElement('td');
+{#    <h1>Señales de Trading de Criptomonedas</h1>#}
+<table>
+    <thead>
+    <tr>
+        <th>Crypto</th>
+        <th>Actual Pric.</th>
+        <th>Highest 1H</th>
+        <th>Lower 1H</th>
+        <th>AVG Price</th>
+        <th>Signal(B|S)</th>
+    </tr>
+    </thead>
+    <tbody>
 
-                        nameCell.textContent = signal.name;
-                        priceCell.textContent = signal.actual_price;
-                        highestCell.textContent = signal.highest_1h;
-                        lowerCell.textContent = signal.lower_1h;
-                        avgCell.textContent = signal.avg_price;
-                        signalCell.textContent = signal.signal;
+    </tbody>
+</table>
+<script>
+    function formatNumber(value) {
+        const [integerPart, decimalPart] = value.toString().split('.');
+        const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return decimalPart !== undefined
+            ? `$${formattedInteger},${decimalPart}`
+            : `$${formattedInteger}`;
+    }
 
-                        row.appendChild(nameCell);
-                        row.appendChild(priceCell);
-                        row.appendChild(highestCell);
-                        row.appendChild(lowerCell);
-                        row.appendChild(avgCell);
-                        row.appendChild(signalCell);
-                        
-                        body.appendChild(row);
-                    });
+
+
+    function actualizarPrecios() {
+        fetch('/api/crypto')
+            .then(response => response.json())
+            .then(signals => {
+                let body = document.querySelector('tbody');
+                body.innerHTML = '';
+                signals.forEach(signal => {
+                    let row = document.createElement('tr');
+
+                    let nameCell = document.createElement('td');
+                    let priceCell = document.createElement('td');
+                    let highestCell = document.createElement('td');
+                    let lowerCell = document.createElement('td');
+                    let avgCell = document.createElement('td');
+                    let signalCell = document.createElement('td');
+
+                    nameCell.textContent = signal.name;
+                    priceCell.textContent = formatNumber(signal.actual_price);
+                    highestCell.textContent = formatNumber(signal.highest_1h);
+                    lowerCell.textContent = formatNumber(signal.lower_1h);
+                    avgCell.textContent = formatNumber(signal.avg_price);
+                    signalCell.textContent = signal.signal;
+
+                    if (signal.signal === 'B') {
+                        signalCell.className = 'buy';
+                    } else {
+                        signalCell.className = 'sell';
+                    }
+
+                    row.appendChild(nameCell);
+                    row.appendChild(priceCell);
+                    row.appendChild(highestCell);
+                    row.appendChild(lowerCell);
+                    row.appendChild(avgCell);
+                    row.appendChild(signalCell);
+
+                    body.appendChild(row);
                 });
-        }
-        setInterval(actualizarPrecios, 2000); // Actualizar cada minuto (60000 ms)
-        //actualizarPrecios()
-    </script>
+            });
+    }
+
+    setInterval(actualizarPrecios, 1000);
+    {#actualizarPrecios()#}
+</script>
 </body>
 </html>

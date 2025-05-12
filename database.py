@@ -7,7 +7,7 @@ db_path = os.path.join(script_dir, DATABASE)
 
 def get_db():
     conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row  # Para acceder a las columnas por nombre
+    conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
@@ -33,16 +33,17 @@ def execute_db(query, args=()):
     conn.close()
 
 def insert_crypto_data(crypto_data):
-    with get_db() as db:
-        for data in crypto_data:
-            db.execute(
-                'INSERT OR REPLACE INTO crypto_prices (name, actual_price, last_updated) VALUES (?, ?, ?)',
-                (data['name'], data['actual_price'], data['timestamp'])
-            )
-        db.commit()
+    if crypto_data is not None:
+        with get_db() as db:
+            for data in crypto_data:
+                db.execute(
+                    'INSERT OR REPLACE INTO crypto_prices (name, actual_price, last_updated) VALUES (?, ?, ?)',
+                    (data['name'], data['actual_price'], data['timestamp'])
+                )
+            db.commit()
 
 def get_all_crypto_data():
-    return query_db('SELECT name, actual_price FROM crypto_prices')
+    return query_db("SELECT name, actual_price FROM crypto_prices")
 
 def get_historical_prices(name, limit=100):
     return query_db('SELECT price, timestamp FROM historical_prices WHERE name = ? ORDER BY timestamp DESC LIMIT ?', (name, limit))
