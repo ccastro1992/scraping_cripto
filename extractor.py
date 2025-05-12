@@ -1,21 +1,15 @@
-from flask import Flask, jsonify, render_template
-import requests
-from bs4 import BeautifulSoup, NavigableString
-import time
 import logging
-import cloudscraper
-import time
-from datetime import datetime, timedelta
 import shutil
 
-
-
+import cloudscraper
+import requests
+from bs4 import BeautifulSoup, NavigableString
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 URL = "https://es.investing.com/crypto"
@@ -23,6 +17,15 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def scrape_with_selenium():
+    """
+    Realiza un web scraping de datos de criptomonedas utilizando Selenium.
+
+    La función utiliza un navegador Chrome en modo 'headless' para navegar al sitio objetivo,
+    captura la tabla dinámica de criptomonedas y extrae sus datos en un formato tabular.
+
+    Returns:
+        list: Lista de listas, donde cada sublista representa una fila con datos de una criptomoneda.
+    """
     PATH_TO_CHROMEDRIVER = "/usr/bin/chromedriver"
     chromedriver_path = shutil.which("chromedriver")
     if chromedriver_path:
@@ -47,14 +50,14 @@ def scrape_with_selenium():
         # Navegar al sitio web
         driver.get(URL)
 
-        # Esperar a que el elemento dinámico esté cargado (ajusta según sea necesario)
+        # Esperar a que el elemento dinámico esté cargado
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, 'datatable-v2_table__93S4Y'))
         )
 
         # Capturar la tabla completa
         table = driver.find_element(By.CLASS_NAME, 'datatable-v2_table__93S4Y')
-        tbody = table.find_element(By.TAG_NAME,'tbody')
+        tbody = table.find_element(By.TAG_NAME, 'tbody')
         rows = tbody.find_elements(By.TAG_NAME, 'tr')[:5]
 
         crypto_data = []
@@ -64,7 +67,7 @@ def scrape_with_selenium():
 
             for col in cols:
                 vals.append(col.text)
-            vals.insert(0, '')
+            vals.insert(0, '')  # Elemento agregado siguiendo el formato esperado
             vals.insert(3, '')
             vals.insert(5, '')
 
@@ -74,7 +77,18 @@ def scrape_with_selenium():
     finally:
         driver.quit()
 
+
 def scrape_with_beautifulsoup():
+    """
+    Realiza un web scraping de datos de criptomonedas utilizando BeautifulSoup.
+
+    La función hace una solicitud HTTP al sitio objetivo a través de la librería `cloudscraper`
+    y extrae los datos relevantes de criptomonedas desde una tabla HTML.
+
+    Returns:
+        list: Lista de listas, donde cada sublista contiene los datos de una criptomoneda.
+        None: En caso de errores HTTP o si no se encuentran datos.
+    """
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -136,8 +150,22 @@ def scrape_with_beautifulsoup():
 
 
 def extract_crypto_data():
-    # return scrape_with_beautifulsoup()
+    """
+    Extrae datos de criptomonedas.
+
+    Llama a una de las funciones de scraping disponibles (`scrape_with_selenium` o `scrape_with_beautifulsoup`)
+    para extraer datos de criptomonedas desde el sitio web.
+
+    Returns:
+        list: Lista de datos de criptomonedas extraídos.
+    """
     return scrape_with_selenium()
 
+
 if __name__ == '__main__':
+    """
+    Punto de entrada del script.
+
+    Extrae los datos de criptomonedas y los imprime en la salida estándar.
+    """
     data = extract_crypto_data()
