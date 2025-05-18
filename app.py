@@ -79,7 +79,7 @@ def get_crypto_historical_data(crypto_name):
     Returns:
         JSON: Lista de precios históricos con timestamps.
     """
-    historical_data = get_historical_prices(crypto_name, limit=30)
+    historical_data = get_historical_prices(crypto_name, limit=100)
     historical_data = list(filter(lambda x: (datetime.now() - x['timestamp']).total_seconds() <= 3600, historical_data))
 
     response_data = [{
