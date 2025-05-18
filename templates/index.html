@@ -65,10 +65,38 @@
             color: #dc3545;
             font-weight: bold;
         }
+
+        .charts-container {
+            display: flex;
+            justify-content: space-around;
+            width: 82%;
+            margin: 20px auto;
+            flex-wrap: wrap;
+        }
+
+        .chart-wrapper {
+            width: 45%;
+            min-width: 300px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+        }
+
+        .crypto-selector {
+            margin: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            width: 200px;
+        }
+
     </style>
 </head>
 <body>
-{#    <h1>Señales de Trading de Criptomonedas</h1>#}
+    <h1>Señales de Trading de Criptomonedas</h1>
 <table>
     <thead>
     <tr>
@@ -84,7 +112,27 @@
 
     </tbody>
 </table>
+
+<select id="cryptoSelector" class="crypto-selector">
+    <option value="">Seleccione una criptomoneda</option>
+</select>
+
+
+<div class="charts-container">
+    <div class="chart-wrapper">
+        <canvas id="preciosChart"></canvas>
+    </div>
+    <div class="chart-wrapper">
+        <canvas id="historicoChart"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
+    let preciosChart = null;
+    let historicoChart = null;
+    let selectedCrypto = null;
+
     function formatNumber(value) {
         const [integerPart, decimalPart] = value.toString().split('.');
         const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
@@ -93,49 +141,168 @@
             : `$${formattedInteger}`;
     }
 
-    function actualizarPrecios() {
-        fetch('/api/crypto')
+    function actualizarGraficaHistorica(cryptoName) {
+        fetch(`/api/crypto/historical/${cryptoName}`)
             .then(response => response.json())
-            .then(signals => {
-                let body = document.querySelector('tbody');
-                body.innerHTML = '';
-                signals.forEach(signal => {
-                    let row = document.createElement('tr');
+            .then(data => {
+                const ctx = document.getElementById('historicoChart');
 
-                    let nameCell = document.createElement('td');
-                    let priceCell = document.createElement('td');
-                    let highestCell = document.createElement('td');
-                    let lowerCell = document.createElement('td');
-                    let avgCell = document.createElement('td');
-                    let signalCell = document.createElement('td');
+                if (historicoChart) {
+                    historicoChart.destroy();
+                }
 
-                    nameCell.textContent = signal.name;
-                    priceCell.textContent = formatNumber(signal.actual_price);
-                    highestCell.textContent = formatNumber(signal.highest_1h);
-                    lowerCell.textContent = formatNumber(signal.lower_1h);
-                    avgCell.textContent = formatNumber(signal.avg_price);
-                    signalCell.textContent = signal.signal;
-
-                    if (signal.signal === 'B') {
-                        signalCell.className = 'buy';
-                    } else {
-                        signalCell.className = 'sell';
+                historicoChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.timestamp.toLocaleString()),
+                        datasets: [{
+                            label: `Precio histórico de ${cryptoName}`,
+                            data: data.map(d => d.price),
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Precio (USD)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Histórico de precios - ${cryptoName}`
+                            }
+                        }
                     }
-
-                    row.appendChild(nameCell);
-                    row.appendChild(priceCell);
-                    row.appendChild(highestCell);
-                    row.appendChild(lowerCell);
-                    row.appendChild(avgCell);
-                    row.appendChild(signalCell);
-
-                    body.appendChild(row);
                 });
             });
     }
 
-    setInterval(actualizarPrecios, 1000);
-    {#actualizarPrecios()#}
+    function actualizarGraficaPrecios(signals) {
+        const ctx = document.getElementById('preciosChart');
+
+        if (preciosChart) {
+            preciosChart.destroy();
+        }
+
+        preciosChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: signals.map(s => s.name),
+                datasets: [{
+                    label: 'Precio Actual',
+                    data: signals.map(s => s.actual_price),
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Precio (USD)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Precios Actuales de Criptomonedas'
+                    }
+                }
+            }
+        });
+    }
+
+    function actualizarSelector(signals) {
+        const selector = document.getElementById('cryptoSelector');
+        selector.innerHTML = '<option value="">Seleccione una criptomoneda</option>';
+
+        signals.forEach(signal => {
+            const option = document.createElement('option');
+            option.value = signal.name;
+            option.textContent = signal.name;
+            selector.appendChild(option);
+        });
+
+        if (selectedCrypto) {
+            selector.value = selectedCrypto;
+        }
+    }
+
+    function actualizarTabla(signals) {
+        const tbody = document.querySelector('tbody');
+        tbody.innerHTML = '';
+
+        signals.forEach(signal => {
+            const row = document.createElement('tr');
+
+            const cells = [
+                signal.name,
+                formatNumber(signal.actual_price),
+                formatNumber(signal.highest_1h),
+                formatNumber(signal.lower_1h),
+                formatNumber(signal.avg_price),
+                signal.signal
+            ];
+
+            cells.forEach((cellText, index) => {
+                const cell = document.createElement('td');
+                cell.textContent = cellText;
+                if (index === 5) {
+                    cell.className = cellText === 'B' ? 'buy' : 'sell';
+                }
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
+        });
+    }
+
+    function actualizarDatos() {
+        fetch('/api/crypto')
+            .then(response => response.json())
+            .then(signals => {
+                actualizarTabla(signals);
+                actualizarGraficaPrecios(signals);
+                actualizarSelector(signals);
+            })
+            .catch(error => {
+                console.error('Error al actualizar los datos:', error);
+            });
+    }
+
+    document.getElementById('cryptoSelector').addEventListener('change', (e) => {
+        selectedCrypto = e.target.value;
+        if (selectedCrypto) {
+            actualizarGraficaHistorica(selectedCrypto);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        actualizarDatos();
+        {#setInterval(actualizarDatos, 5000); // Actualizar cada 5 segundos#}
+    });
+
 </script>
 </body>
 </html>

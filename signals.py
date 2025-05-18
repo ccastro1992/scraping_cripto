@@ -61,7 +61,7 @@ def calculate_metrics(historical_prices):
     # Filtrar precios de la última hora
     prices_last_hour = [
         hp['price'] for hp in historical_prices
-        if (datetime.now() - datetime.strptime(hp['timestamp'], '%Y-%m-%d %H:%M:%S.%f')).total_seconds() <= 3600
+        if (datetime.now() - hp['timestamp']).total_seconds() <= 3600
     ]
 
     if not prices_last_hour:

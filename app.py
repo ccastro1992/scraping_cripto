@@ -4,27 +4,31 @@ from database import init_db, insert_crypto_data, get_all_crypto_data, insert_hi
 from extractor import extract_crypto_data
 from signals import generate_signal, calculate_metrics
 from transformer import transform_data
-
+import time
+from datetime import datetime
 app = Flask(__name__)
 
 
 def fetch_and_store_data():
-    """
-    Extrae los datos de criptomonedas, los transforma y los almacena en la base de datos.
+    max_retries = 3
+    retry_delay = 5  # segundos
 
-    Este proceso incluye:
-        - Extraer los datos crudos de criptomonedas.
-        - Transformar los datos crudos a un formato estructurado.
-        - Insertar la información transformada en la tabla principal de precios.
-        - Insertar los precios históricos asociados con cada criptomoneda.
+    for attempt in range(max_retries):
+        try:
+            raw_data = extract_crypto_data()
+            if raw_data is None:
+                raise Exception("No se pudieron obtener datos")
 
-    No recibe parámetros y no retorna valores.
-    """
-    raw_data = extract_crypto_data()
-    transformed_data = transform_data(raw_data)
-    insert_crypto_data(transformed_data)
-    for data in transformed_data:
-        insert_historical_price(data['name'], data['actual_price'], data['timestamp'])
+            transformed_data = transform_data(raw_data)
+            insert_crypto_data(transformed_data)
+            for data in transformed_data:
+                insert_historical_price(data['name'], data['actual_price'], data['timestamp'])
+            return
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+            else:
+                raise
 
 
 @app.route('/api/crypto', methods=['GET'])
@@ -47,7 +51,7 @@ def get_crypto_data():
             - 'avg_price': Precio promedio en la última hora.
             - 'signal': Señal de compra ('B'), venta ('S') o None.
     """
-    fetch_and_store_data()
+    # fetch_and_store_data()
     crypto_data = get_all_crypto_data()
     signals_data = []
     for data in crypto_data:
@@ -63,6 +67,27 @@ def get_crypto_data():
             'signal': signal
         })
     return jsonify(signals_data)
+
+@app.route('/api/crypto/historical/<crypto_name>', methods=['GET'])
+def get_crypto_historical_data(crypto_name):
+    """
+    Obtiene los datos históricos de una criptomoneda específica.
+
+    Args:
+        crypto_name (str): Nombre de la criptomoneda.
+
+    Returns:
+        JSON: Lista de precios históricos con timestamps.
+    """
+    historical_data = get_historical_prices(crypto_name, limit=30)
+    historical_data = list(filter(lambda x: (datetime.now() - x['timestamp']).total_seconds() <= 3600, historical_data))
+
+    response_data = [{
+        'price': float(price['price']),
+        'timestamp': str(price['timestamp'].strftime('%H:%M:%S'))
+    } for price in historical_data]
+    return jsonify(response_data)
+
 
 
 @app.route('/')

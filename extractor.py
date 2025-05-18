@@ -39,19 +39,30 @@ def scrape_with_selenium():
     chrome_options.add_argument("--disable-dev-shm-usage")  # Reduce el uso de memoria compartida
     chrome_options.add_argument("--window-size=1920x1080")
 
-    prefs = {"profile.managed_default_content_settings.images": 2}
+    # Agregar estos argumentos adicionales
+    chrome_options.add_argument("--dns-prefetch-disable")
+    chrome_options.add_argument("--page-load-strategy=normal")
+
+    prefs = {
+        "profile.managed_default_content_settings.images": 2,
+        "profile.default_content_setting_values.notifications": 2
+    }
     chrome_options.add_experimental_option("prefs", prefs)
 
     # Inicializar el controlador
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(options=chrome_options, service=service)
 
+    # Configurar timeouts más largos
+    driver.set_page_load_timeout(180)  # 3 minutos
+    driver.implicitly_wait(30)  # 30 segundos
+
     try:
         # Navegar al sitio web
         driver.get(URL)
 
         # Esperar a que el elemento dinámico esté cargado
-        WebDriverWait(driver, 10).until(
+        WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.CLASS_NAME, 'datatable-v2_table__93S4Y'))
         )
 
